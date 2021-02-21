@@ -1,82 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using DiskSpaceAnalyzer.Tool;
 
 namespace DiskSpaceAnalyzer.Model
 {
-    public class AnalyzeProgressEventHandler : EventArgs
-    {
-        public int ProgressPercent { get; set; }
-    }
-
-    public class DiskAnalyzeResult
-    {
-        public DiskItem Disk { get; }
-
-        public FileSystemItem Root { get; }
-
-        public DiskAnalyzeResult(DiskItem disk, FileSystemItem root)
-        {
-            Disk = disk;
-            Root = root;
-        }
-    }
-
     public class DiskAnalyzer
     {
         private long _diskUsedSpaceBytes;
         private long _totalAnalyzedBytes;
         private int _lastProgressPercentValue;
+        private readonly FileSystem _fileSystem = new FileSystem();
 
-        public event EventHandler<AnalyzeProgressEventHandler> OnAnalyzeProgress;
+        public event EventHandler<AnalyzeProgressEventArgs> OnAnalyzeProgress;
 
-        public async Task<DiskAnalyzeResult> AnalyzeAsync(DiskItem diskItem)
+        public event EventHandler OnAnalyzeComplete;
+
+        public async Task<DiskAnalyzeResult> AnalyzeAsync(Disk disk)
         {
-            return await Task.Run(() => Analyze(diskItem));
+            return await Task.Run(() => Analyze(disk));
         }
 
-        public DiskAnalyzeResult Analyze(DiskItem diskItem)
+        public DiskAnalyzeResult Analyze(Disk disk)
         {
-            _diskUsedSpaceBytes = diskItem.UsedSpaceBytes;
-            var root = new FileSystemItem(diskItem.RootPath, FileSystemItemKind.Directory);
+            _diskUsedSpaceBytes = disk.UsedSizeBytes;
+            var root = new DiskItem(disk.RootPath, DiskItemKind.Directory);
             Analyze(root);
             _totalAnalyzedBytes = _diskUsedSpaceBytes;
             RaiseOnAnalyzeProgress();
+            RaiseOnAnalyzeComplete();
 
-            return new DiskAnalyzeResult(diskItem, root);
+            return new DiskAnalyzeResult(disk, root);
         }
 
-        private bool Analyze(FileSystemItem parent)
+        private bool Analyze(DiskItem parent)
         {
-            var directoryPaths = GetDirectories(parent.Path);
+            var directoryPaths = _fileSystem.GetDirectories(parent.FullPath);
             if (directoryPaths == null) return false;
             if (directoryPaths.Any())
             {
-                parent.Children = new List<FileSystemItem>(directoryPaths.Length);
+                parent.Children = new List<DiskItem>(directoryPaths.Length);
             }
             foreach (var directoryPath in directoryPaths)
             {
-                var directory = new FileSystemItem(directoryPath, FileSystemItemKind.Directory);
+                var directory = new DiskItem(directoryPath, DiskItemKind.Directory);
                 if (Analyze(directory))
                 {
                     parent.Children.Add(directory);
                     parent.SizeBytes += directory.SizeBytes;
                 }
             }
-            var filePaths = GetFiles(parent.Path);
+            var filePaths = _fileSystem.GetFiles(parent.FullPath);
             if (filePaths == null) return false;
             if (filePaths.Any() && parent.Children == null)
             {
-                parent.Children = new List<FileSystemItem>(filePaths.Length);
+                parent.Children = new List<DiskItem>(filePaths.Length);
             }
             foreach (var filePath in filePaths)
             {
-                var file = new FileSystemItem(filePath, FileSystemItemKind.File);
+                var file = new DiskItem(filePath, DiskItemKind.File);
                 parent.Children.Add(file);
-                file.SizeBytes = GetFileSize(filePath);
+                file.SizeBytes = _fileSystem.GetFileSize(filePath);
                 parent.SizeBytes += file.SizeBytes;
                 _totalAnalyzedBytes += file.SizeBytes;
             }
@@ -93,42 +77,35 @@ namespace DiskSpaceAnalyzer.Model
                 if (currentProgressPercentValue > _lastProgressPercentValue)
                 {
                     _lastProgressPercentValue = currentProgressPercentValue;
-                    OnAnalyzeProgress(this, new AnalyzeProgressEventHandler { ProgressPercent = currentProgressPercentValue });
+                    OnAnalyzeProgress(this, new AnalyzeProgressEventArgs { ProgressPercent = currentProgressPercentValue });
                 }
             }
         }
 
-        private static readonly string _windowsDirectory = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.System)).FullName;
-        private string[] GetDirectories(string path)
+        private void RaiseOnAnalyzeComplete()
         {
-            try
+            if (OnAnalyzeComplete != null)
             {
-                return Directory.GetDirectories(path).Where(x => x.Equals(_windowsDirectory, StringComparison.OrdinalIgnoreCase) == false).ToArray();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return null;
+                OnAnalyzeComplete(this, EventArgs.Empty);
             }
         }
+    }
 
-        private string[] GetFiles(string path)
+    public class AnalyzeProgressEventArgs : EventArgs
+    {
+        public int ProgressPercent { get; set; }
+    }
+
+    public class DiskAnalyzeResult
+    {
+        public Disk Disk { get; }
+
+        public DiskItem Root { get; }
+
+        public DiskAnalyzeResult(Disk disk, DiskItem root)
         {
-            try
-            {
-                return Directory.GetFiles(path);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return null;
-            }
-        }
-
-        private long GetFileSize(string filePath)
-        {
-            WIN32_FIND_DATA findData;
-            WinApi.FindFirstFile(filePath, out findData);
-
-            return findData.nFileSizeLow;
+            Disk = disk;
+            Root = root;
         }
     }
 }

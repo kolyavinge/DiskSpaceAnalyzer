@@ -4,15 +4,15 @@ using System.Linq;
 
 namespace DiskSpaceAnalyzer.Model
 {
-    public class DiskItem
+    public class Disk
     {
-        public DiskItem(DriveInfo driveInfo)
+        public Disk(DriveInfo driveInfo)
         {
             Name = driveInfo.Name;
             RootPath = driveInfo.RootDirectory.FullName;
             TotalSizeBytes = driveInfo.TotalSize;
-            AvailableFreeSpaceBytes = driveInfo.AvailableFreeSpace;
-            UsedSpaceBytes = TotalSizeBytes - AvailableFreeSpaceBytes;
+            FreeSizeBytes = driveInfo.AvailableFreeSpace;
+            UsedSizeBytes = TotalSizeBytes - FreeSizeBytes;
         }
 
         public string Name { get; }
@@ -21,16 +21,16 @@ namespace DiskSpaceAnalyzer.Model
 
         public long TotalSizeBytes { get; }
 
-        public long AvailableFreeSpaceBytes { get; }
+        public long FreeSizeBytes { get; }
 
-        public long UsedSpaceBytes { get; }
+        public long UsedSizeBytes { get; }
     }
 
     public class DiskProvider
     {
-        public IEnumerable<DiskItem> GetDisks()
+        public IEnumerable<Disk> GetDisks()
         {
-            return DriveInfo.GetDrives().Where(x => x.DriveType == DriveType.Fixed).Select(x => new DiskItem(x));
+            return DriveInfo.GetDrives().Where(x => x.DriveType == DriveType.Fixed).Select(x => new Disk(x));
         }
     }
 }
