@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows.Input;
 using DiskSpaceAnalyzer.Model;
 using DiskSpaceAnalyzer.Mvvm;
 using DiskSpaceAnalyzer.Tool;
@@ -22,21 +24,56 @@ namespace DiskSpaceAnalyzer.ViewModel
             }
         }
 
+        private bool _isEnabled;
+        public bool IsEnabled
+        {
+            get { return _isEnabled; }
+            set
+            {
+                _isEnabled = value;
+                RaisePropertyChanged("IsEnabled");
+            }
+        }
+
+        public ICommand SelectDirectoryCommand { get { return new DelegateCommand<DiskItemViewModel>(SelectDirectory); } }
+
         public DiskItemsViewModel(MainModel mainModel)
         {
             _mainModel = mainModel;
+            _mainModel.OnAnalyzeDiskStart += OnAnalyzeDiskStart;
             _mainModel.OnAnalyzeDiskComplete += OnAnalyzeDiskComplete;
+            IsEnabled = true;
+        }
+
+        private void OnAnalyzeDiskStart(object sender, EventArgs e)
+        {
+            IsEnabled = false;
+            Items = Enumerable.Empty<DiskItemViewModel>();
         }
 
         private void OnAnalyzeDiskComplete(object sender, AnalyzeDiskCompleteEventArgs e)
         {
-            Items = e.Result.Root.Children.Select(item => new DiskItemViewModel(e.Result.Disk, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
+            UpdateItems(e.Result.Disk, e.Result.Root);
+            IsEnabled = true;
+        }
+
+        private void SelectDirectory(DiskItemViewModel selectedItem)
+        {
+            if (selectedItem.IsDirectory)
+            {
+                UpdateItems(selectedItem.Disk, selectedItem.DiskItem);
+            }
+        }
+
+        private void UpdateItems(Disk disk, DiskItem diskItem)
+        {
+            Items = diskItem.Children.Select(item => new DiskItemViewModel(disk, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
         }
     }
 
     public class DiskItemViewModel : NotificationObject
     {
-        private Disk _disk;
+        public Disk Disk { get; }
 
         public DiskItem DiskItem { get; }
 
@@ -52,7 +89,7 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         public DiskItemViewModel(Disk disk, DiskItem diskItem)
         {
-            _disk = disk;
+            Disk = disk;
             DiskItem = diskItem;
             SetSizeAndUnits();
             TotalPercent = 100.0f * diskItem.SizeBytes / disk.TotalSizeBytes;

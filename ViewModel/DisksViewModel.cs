@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DiskSpaceAnalyzer.Model;
 using DiskSpaceAnalyzer.Mvvm;
@@ -24,10 +25,34 @@ namespace DiskSpaceAnalyzer.ViewModel
             }
         }
 
+        private bool _isEnabled;
+        public bool IsEnabled
+        {
+            get { return _isEnabled; }
+            set
+            {
+                _isEnabled = value;
+                RaisePropertyChanged("IsEnabled");
+            }
+        }
+
         public DisksViewModel(MainModel mainModel)
         {
             _mainModel = mainModel;
+            _mainModel.OnAnalyzeDiskStart += OnAnalyzeDiskStart;
+            _mainModel.OnAnalyzeDiskComplete += OnAnalyzeDiskComplete;
+            IsEnabled = true;
             Disks = mainModel.GetDisks().Select(x => new DiskViewModel(x)).ToList();
+        }
+
+        private void OnAnalyzeDiskStart(object sender, EventArgs e)
+        {
+            IsEnabled = false;
+        }
+
+        private void OnAnalyzeDiskComplete(object sender, AnalyzeDiskCompleteEventArgs e)
+        {
+            IsEnabled = true;
         }
     }
 

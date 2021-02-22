@@ -5,16 +5,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="200" d:DesignWidth="600">
-    <Grid>
-        <DataGrid ItemsSource="{Binding Items}" SelectionMode="Single" SelectionUnit="FullRow"
-                  CanUserSortColumns="False"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  HeadersVisibility="Column"
-                  AlternationCount="2" AlternatingRowBackground="#dddddd"
-                  RowHeight="22"
-                  HorizontalGridLinesBrush="Gray"
-                  VerticalGridLinesBrush="Gray">
+    <Grid IsEnabled="{Binding IsEnabled}">
+        <DataGrid x:Name="diskItemsViewDataGrid"
+            ItemsSource="{Binding Items}" SelectionMode="Single" SelectionUnit="FullRow"
+            CanUserSortColumns="False"
+            AutoGenerateColumns="False"
+            IsReadOnly="True"
+            HeadersVisibility="Column"
+            AlternationCount="2" AlternatingRowBackground="#eeeeee"
+            RowHeight="22"
+            GridLinesVisibility="Horizontal"
+            HorizontalGridLinesBrush="Gray">
+
             <DataGrid.Resources>
                 <Style TargetType="{x:Type DataGridCell}">
                     <Setter Property="BorderThickness" Value="0" />
@@ -34,6 +36,11 @@
                     </Style.Triggers>
                 </Style>
             </DataGrid.Resources>
+
+            <DataGrid.InputBindings>
+                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding SelectDirectoryCommand}" CommandParameter="{Binding ElementName=diskItemsViewDataGrid, Path=SelectedItem}" />
+            </DataGrid.InputBindings>
+
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="Название" MinWidth="200" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
@@ -81,7 +88,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid Margin="4,0">
-                                <ProgressBar Maximum="100" Value="{Binding TotalPercent, Mode=OneWay}" Margin="0,0,35,0" Height="10" />
+                                <ProgressBar Maximum="100" Value="{Binding TotalPercent, Mode=OneWay}" Margin="0,0,35,0" Height="10" Foreground="#ff952b" />
                                 <TextBlock Text="{Binding TotalPercent, StringFormat='\{0:f1\}%'}" HorizontalAlignment="Right" />
                             </Grid>
                         </DataTemplate>
