@@ -6,8 +6,15 @@
              mc:Ignorable="d" 
              d:DesignHeight="200" d:DesignWidth="600">
     <Grid IsEnabled="{Binding IsEnabled}">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+            <Button Command="{Binding GotoUpCommand}" IsEnabled="{Binding GotoUpCommandEnabled}" Content="Up" VerticalAlignment="Top" Width="24" Height="24">
+                
+            </Button>
+            <TextBlock Text="{Binding HistoryFullPath}" Margin="4,3,0,0" Height="24" />
+        </StackPanel>
         <DataGrid x:Name="diskItemsViewDataGrid"
             ItemsSource="{Binding Items}" SelectionMode="Single" SelectionUnit="FullRow"
+            Margin="0,24,0,0"
             CanUserSortColumns="False"
             AutoGenerateColumns="False"
             IsReadOnly="True"
@@ -38,7 +45,7 @@
             </DataGrid.Resources>
 
             <DataGrid.InputBindings>
-                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding SelectDirectoryCommand}" CommandParameter="{Binding ElementName=diskItemsViewDataGrid, Path=SelectedItem}" />
+                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding GotoDirectoryCommand}" CommandParameter="{Binding ElementName=diskItemsViewDataGrid, Path=SelectedItem}" />
             </DataGrid.InputBindings>
 
             <DataGrid.Columns>
