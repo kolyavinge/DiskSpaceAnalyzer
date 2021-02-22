@@ -12,7 +12,6 @@ namespace DiskSpaceAnalyzer.ViewModel
     public class DiskItemsViewModel : NotificationObject
     {
         private readonly MainModel _mainModel;
-        private Disk _disk;
         private Stack<DiskItem> _historyDiskItems;
 
         private IEnumerable<DiskItemViewModel> _items;
@@ -48,6 +47,17 @@ namespace DiskSpaceAnalyzer.ViewModel
             }
         }
 
+        private bool _reanalyzeDiskCommandEnabled;
+        public bool ReanalyzeDiskCommandEnabled
+        {
+            get { return _reanalyzeDiskCommandEnabled; }
+            set
+            {
+                _reanalyzeDiskCommandEnabled = value;
+                RaisePropertyChanged("ReanalyzeDiskCommandEnabled");
+            }
+        }
+
         private string _historyFullPath;
         public string HistoryFullPath
         {
@@ -63,6 +73,10 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         public ICommand GotoUpCommand { get { return new DelegateCommand(GotoUp); } }
 
+        public ICommand OpenDirectoryCommand { get { return new DelegateCommand(OpenDirectory); } }
+
+        public ICommand ReanalyzeDiskCommand { get { return new DelegateCommand(ReanalyzeDisk); } }
+
         public DiskItemsViewModel(MainModel mainModel)
         {
             _mainModel = mainModel;
@@ -70,6 +84,7 @@ namespace DiskSpaceAnalyzer.ViewModel
             _mainModel.OnAnalyzeDiskComplete += OnAnalyzeDiskComplete;
             IsEnabled = true;
             GotoUpCommandEnabled = false;
+            ReanalyzeDiskCommandEnabled = false;
             _historyDiskItems = new Stack<DiskItem>();
         }
 
@@ -79,11 +94,11 @@ namespace DiskSpaceAnalyzer.ViewModel
             Items = Enumerable.Empty<DiskItemViewModel>();
             _historyDiskItems.Clear();
             HistoryFullPath = "";
+            ReanalyzeDiskCommandEnabled = true;
         }
 
         private void OnAnalyzeDiskComplete(object sender, AnalyzeDiskCompleteEventArgs e)
         {
-            _disk = e.Result.Disk;
             _historyDiskItems.Push(e.Result.Root);
             HistoryFullPath = e.Result.Root.FullPath;
             UpdateItems(e.Result.Root);
@@ -116,19 +131,29 @@ namespace DiskSpaceAnalyzer.ViewModel
             }
         }
 
+        private void OpenDirectory()
+        {
+            System.Diagnostics.Process.Start("explorer.exe", HistoryFullPath);
+        }
+
+        private void ReanalyzeDisk()
+        {
+            _mainModel.Reanalyze();
+        }
+
         private void UpdateItems(DiskItem diskItem)
         {
-            Items = diskItem.Children.Select(item => new DiskItemViewModel(_disk, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
+            Items = diskItem.Children.Select(item => new DiskItemViewModel(_mainModel.SelectedDist, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
         }
     }
 
     public class DiskItemViewModel : NotificationObject
     {
-        public DiskItem DiskItem { get; }
+        public DiskItem DiskItem { get; private set; }
 
-        public string Name { get { return Path.GetFileName(DiskItem.FullPath); } }
+        public string Name { get; private set; }
 
-        public bool IsDirectory { get { return DiskItem.Kind == DiskItemKind.Directory; } }
+        public bool IsDirectory { get; private set; }
 
         public float Size { get; private set; }
 
@@ -139,6 +164,8 @@ namespace DiskSpaceAnalyzer.ViewModel
         public DiskItemViewModel(Disk disk, DiskItem diskItem)
         {
             DiskItem = diskItem;
+            Name = Path.GetFileName(DiskItem.FullPath);
+            IsDirectory = DiskItem.Kind == DiskItemKind.Directory;
             SetSizeAndUnits();
             TotalPercent = 100.0f * diskItem.SizeBytes / disk.TotalSizeBytes;
         }

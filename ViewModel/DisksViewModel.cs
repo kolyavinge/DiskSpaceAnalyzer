@@ -21,7 +21,7 @@ namespace DiskSpaceAnalyzer.ViewModel
             {
                 _selectedDisk = value;
                 RaisePropertyChanged("SelectedDisk");
-                _mainModel.SelectDisk(_selectedDisk.Disk);
+                _mainModel.AnalyzeDisk(_selectedDisk.Disk);
             }
         }
 

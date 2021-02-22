@@ -5,6 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="50" d:DesignWidth="500">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/DiskSpaceAnalyzer;component/Styles/CustomStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Grid IsEnabled="{Binding IsEnabled}">
         <ListBox ItemsSource="{Binding Disks}" SelectedItem="{Binding SelectedDisk}">
             <ListBox.ItemTemplate>
@@ -22,7 +29,7 @@
                         <TextBlock Text="Всего:" Margin="0,32,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="Gray" />
                         <TextBlock Text="{Binding TotalSizeGigabytes, StringFormat='\{0:F1\}Гб'}" Margin="70,32,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" />
 
-                        <ProgressBar Maximum="100" Value="{Binding UsedPercent, Mode=OneWay}" Foreground="#ff952b" Height="10" Margin="0,52,0,0" VerticalAlignment="Top" />
+                        <ProgressBar Maximum="100" Value="{Binding UsedPercent, Mode=OneWay}" Style="{StaticResource DiskSizeProgress}" Height="10" Margin="0,52,0,0" VerticalAlignment="Top" />
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
@@ -35,6 +42,22 @@
                 <Style TargetType="ListBoxItem">
                     <Setter Property="VerticalContentAlignment" Value="Stretch" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Style.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Selector.IsSelectionActive" Value="False" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="DarkOrange" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Selector.IsSelectionActive" Value="True" />
+                                <Condition Property="IsSelected" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="OrangeRed" />
+                        </MultiTrigger>
+                    </Style.Triggers>
                 </Style>
             </ListBox.ItemContainerStyle>
         </ListBox>

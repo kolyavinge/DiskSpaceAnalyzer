@@ -13,9 +13,9 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         public StatusBarViewModel StatusBarViewModel { get; }
 
-        public MainViewModel(MainModel mainModel)
+        public MainViewModel()
         {
-            _mainModel = mainModel;
+            _mainModel = new MainModel();
             DisksViewModel = new DisksViewModel(_mainModel);
             DiskItemsViewModel = new DiskItemsViewModel(_mainModel);
             StatusBarViewModel = new StatusBarViewModel(_mainModel);

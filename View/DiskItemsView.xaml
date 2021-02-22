@@ -5,13 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
              d:DesignHeight="200" d:DesignWidth="600">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/DiskSpaceAnalyzer;component/Styles/CustomStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Grid IsEnabled="{Binding IsEnabled}">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-            <Button Command="{Binding GotoUpCommand}" IsEnabled="{Binding GotoUpCommandEnabled}" Content="Up" VerticalAlignment="Top" Width="24" Height="24">
-                
+        <Grid VerticalAlignment="Top">
+            <Button Command="{Binding GotoUpCommand}" IsEnabled="{Binding GotoUpCommandEnabled}" Content="Up" VerticalAlignment="Top" HorizontalAlignment="Left" Width="24" Height="24">
             </Button>
-            <TextBlock Text="{Binding HistoryFullPath}" Margin="4,3,0,0" Height="24" />
-        </StackPanel>
+            <TextBlock Text="{Binding HistoryFullPath}" Style="{StaticResource TextBlockHyperlink}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="28,3,0,0" Height="24">
+                <TextBlock.InputBindings>
+                    <MouseBinding Gesture="LeftClick" Command="{Binding OpenDirectoryCommand}" />
+                </TextBlock.InputBindings>
+            </TextBlock>
+            <Button Command="{Binding ReanalyzeDiskCommand}" IsEnabled="{Binding ReanalyzeDiskCommandEnabled}" Content="Reanalyze" VerticalAlignment="Top" HorizontalAlignment="Right" Width="24" Height="24">
+            </Button>
+        </Grid>
+
         <DataGrid x:Name="diskItemsViewDataGrid"
             ItemsSource="{Binding Items}" SelectionMode="Single" SelectionUnit="FullRow"
             Margin="0,24,0,0"
@@ -95,7 +108,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid Margin="4,0">
-                                <ProgressBar Maximum="100" Value="{Binding TotalPercent, Mode=OneWay}" Margin="0,0,35,0" Height="10" Foreground="#ff952b" />
+                                <ProgressBar Maximum="100" Value="{Binding TotalPercent, Mode=OneWay}" Margin="0,0,35,0" Height="10" Style="{StaticResource DiskSizeProgress}" />
                                 <TextBlock Text="{Binding TotalPercent, StringFormat='\{0:f1\}%'}" HorizontalAlignment="Right" />
                             </Grid>
                         </DataTemplate>
