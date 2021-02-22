@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using DiskSpaceAnalyzer.Tool;
 
 namespace DiskSpaceAnalyzer.Model
 {
@@ -34,10 +33,7 @@ namespace DiskSpaceAnalyzer.Model
 
         public long GetFileSize(string filePath)
         {
-            WIN32_FIND_DATA findData;
-            WinApi.FindFirstFile(filePath, out findData);
-
-            return findData.nFileSizeLow;
+            return new FileInfo(filePath).Length;
         }
     }
 }

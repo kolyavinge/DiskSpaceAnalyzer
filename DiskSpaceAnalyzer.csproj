@@ -61,7 +61,6 @@
     <Compile Include="Mvvm\DelegateCommand.cs" />
     <Compile Include="Mvvm\NotificationObject.cs" />
     <Compile Include="Tool\Constants.cs" />
-    <Compile Include="Tool\WinApi.cs" />
     <Compile Include="View\StatusBarView.xaml.cs">
       <DependentUpon>StatusBarView.xaml</DependentUpon>
     </Compile>
