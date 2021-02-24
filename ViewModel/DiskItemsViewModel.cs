@@ -12,7 +12,6 @@ namespace DiskSpaceAnalyzer.ViewModel
     public class DiskItemsViewModel : NotificationObject
     {
         private readonly MainModel _mainModel;
-        private Stack<DiskItem> _historyDiskItems;
 
         private IEnumerable<DiskItemViewModel> _items;
         public IEnumerable<DiskItemViewModel> Items
@@ -36,25 +35,25 @@ namespace DiskSpaceAnalyzer.ViewModel
             }
         }
 
-        private bool _gotoUpCommandEnabled;
-        public bool GotoUpCommandEnabled
+        private bool _isGotoUpCommandEnabled;
+        public bool IsGotoUpCommandEnabled
         {
-            get { return _gotoUpCommandEnabled; }
+            get { return _isGotoUpCommandEnabled; }
             set
             {
-                _gotoUpCommandEnabled = value;
-                RaisePropertyChanged("GotoUpCommandEnabled");
+                _isGotoUpCommandEnabled = value;
+                RaisePropertyChanged("IsGotoUpCommandEnabled");
             }
         }
 
-        private bool _reanalyzeDiskCommandEnabled;
-        public bool ReanalyzeDiskCommandEnabled
+        private bool _isRefreshCommandEnabled;
+        public bool IsRefreshCommandEnabled
         {
-            get { return _reanalyzeDiskCommandEnabled; }
+            get { return _isRefreshCommandEnabled; }
             set
             {
-                _reanalyzeDiskCommandEnabled = value;
-                RaisePropertyChanged("ReanalyzeDiskCommandEnabled");
+                _isRefreshCommandEnabled = value;
+                RaisePropertyChanged("IsRefreshCommandEnabled");
             }
         }
 
@@ -73,9 +72,9 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         public ICommand GotoUpCommand { get { return new DelegateCommand(GotoUp); } }
 
-        public ICommand OpenDirectoryCommand { get { return new DelegateCommand(OpenDirectory); } }
+        public ICommand OpenCurrentDirectoryCommand { get { return new DelegateCommand(_mainModel.OpenCurrentDirectory); } }
 
-        public ICommand ReanalyzeDiskCommand { get { return new DelegateCommand(ReanalyzeDisk); } }
+        public ICommand RefreshCommand { get { return new DelegateCommand(_mainModel.Refresh); } }
 
         public DiskItemsViewModel(MainModel mainModel)
         {
@@ -83,24 +82,21 @@ namespace DiskSpaceAnalyzer.ViewModel
             _mainModel.OnAnalyzeDiskStart += OnAnalyzeDiskStart;
             _mainModel.OnAnalyzeDiskComplete += OnAnalyzeDiskComplete;
             IsEnabled = true;
-            GotoUpCommandEnabled = false;
-            ReanalyzeDiskCommandEnabled = false;
-            _historyDiskItems = new Stack<DiskItem>();
+            IsGotoUpCommandEnabled = false;
+            IsRefreshCommandEnabled = false;
         }
 
         private void OnAnalyzeDiskStart(object sender, EventArgs e)
         {
             IsEnabled = false;
             Items = Enumerable.Empty<DiskItemViewModel>();
-            _historyDiskItems.Clear();
-            HistoryFullPath = "";
-            ReanalyzeDiskCommandEnabled = true;
+            UpdateHistoryFullPath();
+            IsRefreshCommandEnabled = true;
         }
 
         private void OnAnalyzeDiskComplete(object sender, AnalyzeDiskCompleteEventArgs e)
         {
-            _historyDiskItems.Push(e.Result.Root);
-            HistoryFullPath = e.Result.Root.FullPath;
+            UpdateHistoryFullPath();
             UpdateItems(e.Result.Root);
             IsEnabled = true;
         }
@@ -109,78 +105,32 @@ namespace DiskSpaceAnalyzer.ViewModel
         {
             if (selectedItem.IsDirectory)
             {
-                _historyDiskItems.Push(selectedItem.DiskItem);
-                HistoryFullPath = selectedItem.DiskItem.FullPath;
+                _mainModel.GotoDirectory(selectedItem.DiskItem);
+                UpdateHistoryFullPath();
                 UpdateItems(selectedItem.DiskItem);
-                GotoUpCommandEnabled = true;
+                IsGotoUpCommandEnabled = _mainModel.IsGotoUpEnabled;
             }
         }
 
         private void GotoUp()
         {
-            if (_historyDiskItems.Count > 1)
+            if (_mainModel.IsGotoUpEnabled)
             {
-                _historyDiskItems.Pop();
-                var parent = _historyDiskItems.Peek();
-                HistoryFullPath = parent.FullPath;
+                var parent = _mainModel.GotoUp();
+                UpdateHistoryFullPath();
                 UpdateItems(parent);
+                IsGotoUpCommandEnabled = _mainModel.IsGotoUpEnabled;
             }
-            if (_historyDiskItems.Count == 1)
-            {
-                GotoUpCommandEnabled = false;
-            }
-        }
-
-        private void OpenDirectory()
-        {
-            System.Diagnostics.Process.Start("explorer.exe", HistoryFullPath);
-        }
-
-        private void ReanalyzeDisk()
-        {
-            _mainModel.Reanalyze();
         }
 
         private void UpdateItems(DiskItem diskItem)
         {
             Items = diskItem.Children.Select(item => new DiskItemViewModel(_mainModel.SelectedDist, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
         }
-    }
 
-    public class DiskItemViewModel : NotificationObject
-    {
-        public DiskItem DiskItem { get; private set; }
-
-        public string Name { get; private set; }
-
-        public bool IsDirectory { get; private set; }
-
-        public float Size { get; private set; }
-
-        public SizeUnit Unit { get; private set; }
-
-        public float TotalPercent { get; private set; }
-
-        public DiskItemViewModel(Disk disk, DiskItem diskItem)
+        private void UpdateHistoryFullPath()
         {
-            DiskItem = diskItem;
-            Name = Path.GetFileName(DiskItem.FullPath);
-            IsDirectory = DiskItem.Kind == DiskItemKind.Directory;
-            SetSizeAndUnits();
-            TotalPercent = 100.0f * diskItem.SizeBytes / disk.TotalSizeBytes;
-        }
-
-        private void SetSizeAndUnits()
-        {
-            Size = (float)DiskItem.SizeBytes / Constants._1024_pow3;
-            Unit = SizeUnit.Gigabytes;
-            if (Size < 1.0f)
-            {
-                Size = (float)DiskItem.SizeBytes / Constants._1024_pow2;
-                Unit = SizeUnit.Megabytes;
-            }
+            HistoryFullPath = _mainModel.HistoryFullPath;
         }
     }
-
-    public enum SizeUnit { Megabytes = 1, Gigabytes = 2 }
 }
