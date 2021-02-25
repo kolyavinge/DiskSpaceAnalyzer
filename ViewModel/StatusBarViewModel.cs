@@ -1,6 +1,7 @@
 ﻿using System;
 using DiskSpaceAnalyzer.Model;
 using DiskSpaceAnalyzer.Mvvm;
+using Microsoft.WindowsAPICodePack.Taskbar;
 
 namespace DiskSpaceAnalyzer.ViewModel
 {
@@ -37,17 +38,21 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         private void OnAnalyzeDiskStart(object sender, EventArgs e)
         {
+            ProgressValue = 0;
+            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
             IsProgress = true;
         }
 
         private void OnAnalyzeDiskProgress(object sender, AnalyzeProgressEventArgs e)
         {
             ProgressValue = e.ProgressPercent;
+            TaskbarManager.Instance.SetProgressValue(e.ProgressPercent, 100);
         }
 
         private void OnAnalyzeDiskComplete(object sender, AnalyzeDiskCompleteEventArgs e)
         {
             ProgressValue = 0;
+            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
             IsProgress = false;
         }
     }

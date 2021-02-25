@@ -6,8 +6,8 @@
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d"
         Title="Disk Space Analyzer"
-        MinHeight="450" MinWidth="800"
-        Height="450" Width="800">
+        MinHeight="500" MinWidth="800"
+        Height="500" Width="800">
     <Window.DataContext>
         <local:MainViewModel />
     </Window.DataContext>
