@@ -99,6 +99,7 @@ namespace DiskSpaceAnalyzer.ViewModel
             UpdateHistoryFullPath();
             UpdateItems(e.Result.Root);
             IsEnabled = true;
+            IsGotoUpCommandEnabled = _mainModel.IsGotoUpEnabled;
         }
 
         private void GotoDirectory(DiskItemViewModel selectedItem)
