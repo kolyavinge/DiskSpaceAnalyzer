@@ -11,7 +11,16 @@ namespace DiskSpaceAnalyzer.ViewModel
     {
         private readonly MainModel _mainModel;
 
-        public IEnumerable<DiskViewModel> Disks { get; private set; }
+        private IEnumerable<DiskViewModel> _disks;
+        public IEnumerable<DiskViewModel> Disks
+        {
+            get { return _disks; }
+            set
+            {
+                _disks = value;
+                RaisePropertyChanged("Disks");
+            }
+        }
 
         private DiskViewModel _selectedDisk;
         public DiskViewModel SelectedDisk
@@ -21,7 +30,10 @@ namespace DiskSpaceAnalyzer.ViewModel
             {
                 _selectedDisk = value;
                 RaisePropertyChanged("SelectedDisk");
-                _mainModel.SelectDisk(_selectedDisk.Disk);
+                if (_selectedDisk != null)
+                {
+                    _mainModel.SelectDisk(_selectedDisk.Disk);
+                }
             }
         }
 
@@ -63,7 +75,7 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         private void UpdateDisks()
         {
-            Disks = _mainModel.GetDisks().Select(x => new DiskViewModel(x)).ToList();
+            Disks = _mainModel.Disks.Select(x => new DiskViewModel(x)).ToList();
         }
     }
 
