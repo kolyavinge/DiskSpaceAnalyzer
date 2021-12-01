@@ -16,27 +16,26 @@ namespace DiskSpaceAnalyzer.Model
 
         public event EventHandler OnRefresh;
 
-        public Disk SelectedDist { get; private set; }
+        public Disk SelectedDisk { get; private set; }
 
         public string HistoryFullPath
         {
-            get
-            {
-                return _historyDiskItems.Any() ? _historyDiskItems.Peek().FullPath : "";
-            }
+            get { return _historyDiskItems.Any() ? _historyDiskItems.Peek().FullPath : ""; }
         }
 
         public bool IsGotoUpEnabled { get { return _historyDiskItems.Count > 1; } }
 
-        public IEnumerable<Disk> GetDisks()
+        public IEnumerable<Disk> Disks { get; private set; }
+
+        public MainModel()
         {
-            var diskProvider = new DiskProvider();
-            return diskProvider.GetDisks();
+            UpdateDisks();
         }
 
         public async void SelectDisk(Disk disk)
         {
-            SelectedDist = disk;
+            SelectedDisk = disk;
+            if (SelectedDisk == null) return;
             _historyDiskItems = new Stack<DiskItem>();
             if (OnAnalyzeDiskStart != null) OnAnalyzeDiskStart(this, EventArgs.Empty);
             var analyzer = new DiskAnalyzer();
@@ -48,7 +47,10 @@ namespace DiskSpaceAnalyzer.Model
 
         public async void Refresh()
         {
-            SelectDisk(SelectedDist);
+            var selectedDiskName = SelectedDisk.Name;
+            UpdateDisks();
+            SelectedDisk = Disks.First(x => x.Name == selectedDiskName);
+            SelectDisk(SelectedDisk);
             if (OnRefresh != null) OnRefresh(this, EventArgs.Empty);
         }
 
@@ -73,6 +75,12 @@ namespace DiskSpaceAnalyzer.Model
         public void OpenCurrentDirectory()
         {
             System.Diagnostics.Process.Start("explorer.exe", HistoryFullPath);
+        }
+
+        private void UpdateDisks()
+        {
+            var diskProvider = new DiskProvider();
+            Disks = diskProvider.GetDisks();
         }
     }
 

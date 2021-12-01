@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using DiskSpaceAnalyzer.Model;
 using DiskSpaceAnalyzer.Mvvm;
-using DiskSpaceAnalyzer.Tool;
 
 namespace DiskSpaceAnalyzer.ViewModel
 {
@@ -126,7 +124,7 @@ namespace DiskSpaceAnalyzer.ViewModel
 
         private void UpdateItems(DiskItem diskItem)
         {
-            Items = diskItem.Children.Select(item => new DiskItemViewModel(_mainModel.SelectedDist, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
+            Items = diskItem.Children.Select(item => new DiskItemViewModel(_mainModel.SelectedDisk, item)).OrderByDescending(x => x.DiskItem.SizeBytes).ToList();
         }
 
         private void UpdateHistoryFullPath()
