@@ -11,6 +11,10 @@ namespace DiskSpaceAnalyzer.Model
             {
                 return Directory.GetDirectories(path);
             }
+            catch (DirectoryNotFoundException)
+            {
+                return null;
+            }
             catch (UnauthorizedAccessException)
             {
                 return null;
